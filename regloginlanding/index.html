@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Expense Tracker</title>
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 0;
+    }
+    nav {
+        background: linear-gradient(to right, #0f4c75, #3282b8);
+        padding: 15px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+    nav a {
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    nav a:hover {
+        text-decoration: underline;
+    }
+    .container {
+        display: flex;
+        justify-content: center;
+        margin-top: 50px;
+    }
+    .card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        max-width: 500px;
+        width: 100%;
+        text-align: center;
+    }
+    .card h1, .card h2 {
+        color: #0f4c75;
+    }
+    .btn {
+        background: linear-gradient(to right, #0f4c75, #3282b8);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        margin: 5px;
+    }
+    .btn:hover {
+        opacity: 0.9;
+    }
+    input {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    table, th, td {
+        border: 1px solid #ddd;
+    }
+    th, td {
+        padding: 10px;
+        text-align: left;
+    }
+    footer {
+        background: linear-gradient(to right, #0f4c75, #3282b8);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+    }
+</style>
+</head>
+<body>
+
+<nav id="navbar" style="display:none;">
+    <a href="#" onclick="showPage('home')">Home</a>
+    <a href="#" onclick="showPage('income')">Set Income</a>
+    <a href="#">Budget</a>
+    <a href="#">Track Expenses</a>
+    <a href="#">Summary</a>
+    <a href="#">Savings Goals</a>
+    <a href="#" onclick="logout()">Logout</a>
+</nav>
+
+<div id="main-container">
+
+    <!-- Home -->
+    <div id="home" class="container">
+        <div class="card">
+            <h1>Welcome to the Personal Expense Tracker!</h1>
+            <p>This platform helps you track and manage your finances effortlessly.</p>
+            <button class="btn" onclick="showPage('register')">Register</button>
+            <button class="btn" onclick="showPage('login')">Login</button>
+        </div>
+    </div>
+
+    <!-- Register -->
+    <div id="register" class="container" style="display:none;">
+        <div class="card">
+            <h2>Register</h2>
+            <input type="text" id="regUsername" placeholder="Username">
+            <input type="password" id="regPassword" placeholder="Password">
+            <button class="btn" onclick="registerUser()">Register</button>
+            <p>Already have an account? <a href="#" onclick="showPage('login')">Login here</a></p>
+        </div>
+    </div>
+
+    <!-- Login -->
+    <div id="login" class="container" style="display:none;">
+        <div class="card">
+            <h2>Login</h2>
+            <input type="text" id="loginUsername" placeholder="Username">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button class="btn" onclick="loginUser()">Login</button>
+            <p>Don't have an account? <a href="#" onclick="showPage('register')">Register here</a></p>
+        </div>
+    </div>
+
+    <!-- Income Page -->
+    <div id="income" class="container" style="display:none;">
+        <div class="card" style="text-align:left;">
+            <h2>Set Your Monthly Income</h2>
+            <input type="text" id="incomeSource" placeholder="Income Source (e.g., Salary)">
+            <input type="number" id="incomeAmount" placeholder="Amount (INR)">
+            <button class="btn" onclick="addIncome()">Add Income Source</button>
+
+            <h3>Income Sources</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Amount (INR)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="incomeTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    © 2025 Personal Expense Tracker. All rights reserved.
+</footer>
+
+<script>
+    let users = JSON.parse(localStorage.getItem('users')) || {};
+    let currentUser = localStorage.getItem('currentUser');
+    let incomes = JSON.parse(localStorage.getItem('incomes')) || {};
+
+    function showPage(pageId) {
+        document.querySelectorAll("#main-container > div").forEach(div => div.style.display = "none");
+        document.getElementById(pageId).style.display = "flex";
+        if(pageId === 'income') loadIncomeTable();
+        document.getElementById('navbar').style.display = (pageId !== 'home' && pageId !== 'login' && pageId !== 'register') ? 'flex' : 'none';
+    }
+
+    function registerUser() {
+        let username = document.getElementById('regUsername').value.trim();
+        let password = document.getElementById('regPassword').value.trim();
+        if(username && password) {
+            if(users[username]) {
+                alert('User already exists!');
+            } else {
+                users[username] = password;
+                localStorage.setItem('users', JSON.stringify(users));
+                alert('Registration successful!');
+                showPage('login');
+            }
+        } else {
+            alert('Please fill all fields.');
+        }
+    }
+
+    function loginUser() {
+        let username = document.getElementById('loginUsername').value.trim();
+        let password = document.getElementById('loginPassword').value.trim();
+        if(users[username] && users[username] === password) {
+            currentUser = username;
+            localStorage.setItem('currentUser', username);
+            alert('Login successful!');
+            showPage('income');
+        } else {
+            alert('Invalid credentials.');
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('currentUser');
+        currentUser = null;
+        showPage('home');
+    }
+
+    function addIncome() {
+        let source = document.getElementById('incomeSource').value.trim();
+        let amount = document.getElementById('incomeAmount').value.trim();
+        if(source && amount) {
+            if(!incomes[currentUser]) incomes[currentUser] = [];
+            incomes[currentUser].push({source, amount});
+            localStorage.setItem('incomes', JSON.stringify(incomes));
+            loadIncomeTable();
+            document.getElementById('incomeSource').value = '';
+            document.getElementById('incomeAmount').value = '';
+        } else {
+            alert('Please fill all fields.');
+        }
+    }
+
+    function loadIncomeTable() {
+        let tableBody = document.getElementById('incomeTable');
+        tableBody.innerHTML = '';
+        if(incomes[currentUser]) {
+            incomes[currentUser].forEach((inc, index) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${inc.source}</td>
+                        <td>${inc.amount}</td>
+                        <td><button onclick="deleteIncome(${index})">Delete</button></td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    function deleteIncome(index) {
+        incomes[currentUser].splice(index, 1);
+        localStorage.setItem('incomes', JSON.stringify(incomes));
+        loadIncomeTable();
+    }
+
+    if(currentUser) showPage('income');
+    else showPage('home');
+</script>
+
+</body>
+</html>
